@@ -1,0 +1,91 @@
+{% load static %}
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Sistema Stampa Etichette</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { padding: 24px; font-family: Arial, Helvetica, sans-serif; }
+    .product-row { display:flex; align-items:center; gap:10px; margin:10px 0; }
+    .qty-box { width:100px; display:flex; align-items:center; }
+    .qty-box input { text-align:center; width:48px; }
+    .peso-box { width:80px; text-align:right; }
+    .category-tabs { gap:12px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h3>Sistema Stampa Etichette</h3>
+
+  <div class="row align-items-start">
+    <!-- Colonna sinistra: scelta etichette -->
+    <div id="app" class="col-md-7">
+      <form method="post" action="{% url 'print_pdf' %}" id="labelForm">
+        {% csrf_token %}
+        <div class="row mb-3">
+          <div class="col-auto">
+            <label>Data scadenza</label>
+            <input v-model="data_scadenza" name="data_scadenza" type="date" class="form-control" required>
+          </div>
+          <div class="col-auto">
+            <label>Codice animale</label>
+            <input v-model="codice_animale" name="codice_animale" type="text" class="form-control" placeholder="IT..." required>
+          </div>
+          <div class="col d-flex align-items-end">
+            <button type="submit" class="btn btn-success">Stampa Etichette (PDF)</button>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <div class="d-flex category-tabs flex-wrap">
+            <button v-for="cat in categories" :key="cat" type="button"
+                    :class="['btn me-2 mb-2', selectedCategory === cat ? 'btn-primary' : 'btn-outline-secondary']"
+                    @click="selectCategory(cat)"><span v-text="cat"></span></button>
+          </div>
+        </div>
+
+        <!-- Lista prodotti -->
+        <div v-for="prod in filteredProducts" :key="prod.id" class="product-row">
+          <div style="width:300px"><span v-text="prod.nome"></span></div>
+          <div class="qty-box">
+            <button type="button" class="btn btn-sm btn-success" @click="decrement(prod.id)">-</button>
+            <input type="number" :name="'qta_' + prod.id" v-model.number="quantities[prod.id]" min="0" >
+            <button type="button" class="btn btn-sm btn-success" @click="increment(prod.id)">+</button>
+          </div>
+          <div class="peso-box">
+            <input type="text" :value="prod.peso" readonly class="form-control form-control-sm">
+          </div>
+          <!-- Bottone elimina direttamente qui -->
+          <div>
+            <a :href="`/elimina-prodotto/${prod.id}/`" class="btn btn-sm btn-danger">X</a>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Colonna destra: solo form aggiunta -->
+    <div class="col-md-5">
+      <div style="position: sticky; top: 20px;">
+        <h5>Aggiungi nuova tipologia</h5>
+        <form method="post" action="">
+          {% csrf_token %}
+          {{ form_prod.as_p }}
+          <button type="submit" name="aggiungi_prodotto" class="btn btn-primary">Aggiungi</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.PRODUCTS = JSON.parse('{{ products|escapejs }}');
+  window.CATEGORIES = JSON.parse('{{ categories|escapejs }}');
+</script>
+
+<!-- Vue 3 via CDN -->
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<!-- main.js static -->
+<script src="{% static 'stampa/main.js' %}"></script>
+</body>
+</html>
