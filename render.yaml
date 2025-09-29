@@ -25,8 +25,8 @@ services:
 
     disks:
       - name: data
-        mount_path: /var/data
-        size_gb: 1
+        mountPath: /var/data
+        sizeGB: 1
 
-    health_check:
-      path: /
+    healthCheckPath: /
+
