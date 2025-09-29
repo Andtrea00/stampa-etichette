@@ -9,13 +9,8 @@ services:
       python manage.py collectstatic --noinput
 
     startCommand: |
-      export DB_PATH=${DB_PATH:-/var/data/db.sqlite3}
-      if [ ! -f "$DB_PATH" ] && [ -f /opt/render/project/src/db.sqlite3 ]; then
-        cp /opt/render/project/src/db.sqlite3 "$DB_PATH"
-        chmod 664 "$DB_PATH"
-      fi
-      python manage.py migrate --noinput
-      gunicorn print_label.wsgi:application --bind 0.0.0.0:${PORT}
+     python manage.py migrate --noinput
+     gunicorn print_label.wsgi:application --bind 0.0.0.0:${PORT}
 
     envVars:
       - key: DB_PATH
