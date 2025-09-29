@@ -3,46 +3,29 @@ services:
     name: stampa-etichette
     env: python
 
-    # Comandi di build (DISCO NON disponibile in questa fase!)
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
-      # Colleziona gli statici (non tocca il DB)
       python manage.py collectstatic --noinput
 
-    # Comando di start (qui il DISCO è montato su /var/data)
     startCommand: |
-      # Assicura che DB_PATH sia impostato
       export DB_PATH=${DB_PATH:-/var/data/db.sqlite3}
-
-      # Se NON esiste il DB persistente ma c'è quello vecchio nel codice, copialo
       if [ ! -f "$DB_PATH" ] && [ -f /opt/render/project/src/db.sqlite3 ]; then
         cp /opt/render/project/src/db.sqlite3 "$DB_PATH"
         chmod 664 "$DB_PATH"
       fi
-
-      # Se non esiste nessun DB, Django lo crea con migrate
       python manage.py migrate --noinput
-
-      # Avvia l'app
       gunicorn print_label.wsgi:application --bind 0.0.0.0:${PORT}
 
-    # Variabili d'ambiente minime
     envVars:
       - key: DB_PATH
         value: /var/data/db.sqlite3
-      # Metti a True solo se ti serve il debug
       - key: DEBUG
         value: "False"
-      # (Opzionale) SECRET_KEY: se non la setti, userà il default nel tuo settings.py
-      # - key: SECRET_KEY
-      #   value: "metti-una-chiave-robusta-qui"
 
-    # Disco persistente: fondamentale per SQLite
     disks:
       - name: data
         mountPath: /var/data
         sizeGB: 1
 
-    # (Opzionale) healthcheck per evitare restart in loop
     healthCheckPath: /
